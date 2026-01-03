@@ -387,19 +387,176 @@ setTimeout(() => {
 
 // ==================== FORM SUBMISSION ====================
 const contactForm = document.querySelector('.contact-form');
+const submitBtn = contactForm.querySelector('.submit-btn');
 
-contactForm.addEventListener('submit', (e) => {
+contactForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     // Get form values
-    const formData = new FormData(contactForm);
+    const formData = {
+        name: contactForm.querySelector('input[type="text"]').value,
+        email: contactForm.querySelector('input[type="email"]').value,
+        subject: contactForm.querySelectorAll('input[type="text"]')[1].value,
+        message: contactForm.querySelector('textarea').value
+    };
     
-    // Show success message (you can replace this with actual form submission logic)
-    alert('Thank you for your message! I will get back to you soon.');
+    // Disable submit button and show loading state
+    submitBtn.disabled = true;
+    const originalText = submitBtn.querySelector('span').textContent;
+    submitBtn.querySelector('span').textContent = 'Sending...';
+    submitBtn.style.opacity = '0.7';
     
-    // Reset form
-    contactForm.reset();
+    try {
+        // Send data to Vercel serverless function
+        const response = await fetch('/api/contact', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Show success message
+            showNotification('Success! Your message has been sent. I\'ll get back to you soon!', 'success');
+            
+            // Reset form
+            contactForm.reset();
+        } else {
+            // Show error message
+            showNotification(result.error || 'Failed to send message. Please try again.', 'error');
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Network error. Please check your connection and try again.', 'error');
+    } finally {
+        // Re-enable submit button
+        submitBtn.disabled = false;
+        submitBtn.querySelector('span').textContent = originalText;
+        submitBtn.style.opacity = '1';
+    }
 });
+
+// Notification system
+function showNotification(message, type = 'success') {
+    const existingNotification = document.querySelector('.notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <span class="notification-icon">${type === 'success' ? '✓' : '✕'}</span>
+            <span class="notification-message">${message}</span>
+        </div>
+    `;
+    
+    const style = document.createElement('style');
+    style.textContent = `
+        .notification {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: white;
+            padding: 20px 25px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 10000;
+            animation: slideIn 0.4s ease;
+            max-width: 400px;
+        }
+        
+        .notification.success {
+            border-left: 4px solid #64ffda;
+        }
+        
+        .notification.error {
+            border-left: 4px solid #ff6b6b;
+        }
+        
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .notification-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .notification.success .notification-icon {
+            background: #64ffda;
+            color: #0a192f;
+        }
+        
+        .notification.error .notification-icon {
+            background: #ff6b6b;
+            color: white;
+        }
+        
+        .notification-message {
+            color: #333;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .notification {
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+        }
+    `;
+    
+    if (!document.querySelector('style[data-notification-styles]')) {
+        style.setAttribute('data-notification-styles', '');
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.4s ease';
+        setTimeout(() => {
+            notification.remove();
+        }, 400);
+    }, 5000);
+}
 
 // ==================== SMOOTH SCROLL ====================
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
