@@ -261,11 +261,11 @@ window.addEventListener('resize', () => {
 // ==================== TYPING EFFECT ====================
 const typedText = document.querySelector('.typed-text');
 const texts = [
-    'const role = "Full-Stack Developer"',
-    'const position = "CTO at Prodizy Tech"',
-    'const passion = "Building Scalable Solutions"',
-    'const expertise = "React + Node.js + Cloud"',
-    'const mission = "Innovating the Future"'
+    'const role = "Frontend Developer"',
+    'const passion = "Creating Engaging UIs"',
+    'const expertise = "HTML, CSS, JavaScript"',
+    'const mission = "Building Scalable Web Apps"',
+    'const hobby = "Exploring New Tech Trends"'
 ];
 
 let textIndex = 0;
